@@ -45,7 +45,7 @@ parseAndTestFileFirst (ParseAndTestInformation (FileParsingInformation beforeSta
     let (FileParsingInformation nextBeforeStatement nextStatement nextAfterStatement) = (getNextStatement beforeStatement statement afterStatement)
 
     -- Run Tests
-    let commandOutput = exec testCommand
+    let commandOutput = exec testCommand nextStatement
     if length nextAfterStatement == 1
     then (ParseAndTestInformationOutput (FileParsingInformation (nextBeforeStatement ++ nextStatement) "" nextAfterStatement) testCommand commandOutput)
     else parseAndTestFile (ParseAndTestInformationOutput (FileParsingInformation (nextBeforeStatement ++ nextStatement) "" nextAfterStatement) testCommand commandOutput)
@@ -55,11 +55,11 @@ parseAndTestFileFirst (ParseAndTestInformation (FileParsingInformation beforeSta
 -- Output statement "" contentOfFile-statement, testCommand, CommandOutput
 -- Finishes when the file is completely parsed
 parseAndTestFile :: ParseAndTestInformationOutput -> ParseAndTestInformationOutput
-parseAndTestFile (ParseAndTestInformationOutput (FileParsingInformation beforeStatement statement afterStatement) testCommandSecond commandOutput) = do
+parseAndTestFile (ParseAndTestInformationOutput (FileParsingInformation beforeStatement statement afterStatement) testCommandSecond allCommandOutputs) = do
     let FileParsingInformation nextBeforeStatement nextStatement nextAfterStatement = (getNextStatement beforeStatement statement afterStatement)
 
     -- Run Tests
-    let output = commandOutput +++ (exec testCommandSecond)
+    let output = allCommandOutputs +++ (exec testCommandSecond nextStatement)
     if length nextAfterStatement == 0
     then (ParseAndTestInformationOutput (FileParsingInformation (nextBeforeStatement ++ nextStatement) "" nextAfterStatement) testCommandSecond output)
     else parseAndTestFile (ParseAndTestInformationOutput (FileParsingInformation (nextBeforeStatement ++ nextStatement) "" nextAfterStatement) testCommandSecond output)
@@ -83,11 +83,13 @@ checkEndOfStatement character =
     then True
     else False
 
-exec :: String -> IO (String)
-exec cmd = do
+exec :: String -> String -> IO String
+exec cmd deletedStatement = do
     let splitCommand = splitStringOnDelimeter cmd ' '
     (exitCode, output, errOutput) <- readProcessWithExitCode (head splitCommand) (tail splitCommand) ""
-    return output
+    if exitCode == ExitSuccess
+    then return ("Deleting the statement " ++ deletedStatement ++ " did not fail any tests. Please look into this!\n\n")
+    else return ("")
 
 splitStringOnDelimeter :: String -> Char -> [String]
 splitStringOnDelimeter "" delimeter = [""]
