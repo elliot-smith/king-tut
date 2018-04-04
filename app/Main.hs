@@ -13,7 +13,7 @@ main = do
     let currDir = withCurrentDirectory
     let backupFile = (fileName ++ ".tut.backup")
     let tempFile = (fileName ++ ".tut.tmp")
-    let command = "echo"
+    let command = "echo hello world"
 
     -- Create handles for both the fileName and the backup file
     originalFileHandle <- openFile fileName ReadMode

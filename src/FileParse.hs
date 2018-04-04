@@ -16,7 +16,6 @@ import System.Directory
 import Data.List
 import System.Process
 import GHC.IO.Exception
-import Control.Applicative (liftA2)
 
 data FileParsingInformation = FileParsingInformation{ beforeStatement :: String,
                                                       statement :: String,
@@ -91,8 +90,17 @@ checkEndOfStatement character = do
 
 exec :: String -> IO (String)
 exec cmd = do
-    (exitCode, output, errOutput) <- readProcessWithExitCode cmd ["hello world"] ""
+    let splitCommand = splitStringOnDelimeter cmd ' '
+    (exitCode, output, errOutput) <- readProcessWithExitCode (head splitCommand) (tail splitCommand) ""
     return output
+
+splitStringOnDelimeter :: String -> Char -> [String]
+splitStringOnDelimeter "" delimeter = [""]
+
+-- Credits to https://stackoverflow.com/a/49611655/6063754
+splitStringOnDelimeter (h:t) delimeter | h == delimeter = "" : split
+                                       | otherwise = (h : sh) : st
+    where split@(sh:st) = splitStringOnDelimeter t delimeter
 
 successOrNothing :: (ExitCode, a, b) -> Maybe a
 successOrNothing (exitCode, output, _) =
