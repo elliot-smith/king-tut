@@ -97,7 +97,7 @@ exec cmd = do
 splitStringOnDelimeter :: String -> Char -> [String]
 splitStringOnDelimeter "" delimeter = [""]
 
--- Credits to https://stackoverflow.com/a/49611655/6063754
+-- Credits to Willem Van Onsem from https://stackoverflow.com/a/49611655/6063754
 splitStringOnDelimeter (h:t) delimeter | h == delimeter = "" : split
                                        | otherwise = (h : sh) : st
     where split@(sh:st) = splitStringOnDelimeter t delimeter
