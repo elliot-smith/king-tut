@@ -1,10 +1,9 @@
 module FileParse
-    ( goThroughFile,
-    parseAndTestFileFirst,
+    (parseAndTestFileFirst,
     parseAndTestFile,
     getNextStatement,
     checkEndOfStatement,
-    exec, successOrNothing,
+    exec,
     FileParsingInformation  (..),
     ParseAndTestInformation  (..),
     ParseAndTestInformationOutput (..)
@@ -30,10 +29,6 @@ data ParseAndTestInformation = ParseAndTestInformation { statements :: FileParsi
 data ParseAndTestInformationOutput = ParseAndTestInformationOutput { statementsOutput :: FileParsingInformation,
                                                          testCommandSecond :: String ,
                                                          commandOutput :: IO String }
-
-goThroughFile :: String -> IO ()
-goThroughFile originalString = do
-    putStrLn originalString
 
 -- Credits to Chris Taylor from https://stackoverflow.com/questions/20645805/haskell-concat-two-io-strings
 (+++) :: Monad m => m [a] -> m [a] -> m [a]
@@ -77,13 +72,13 @@ getNextStatement beforeStatement currentStatement "" = FileParsingInformation be
 --Parse File
 -- If the next statement passes checkEndOfStatement it then returns the previous beforeStatement, currentStatement plus head of afterStatement, tail afterStatement
 -- If it doesn't then it calls itself again with beforeStatement, currentStatement plus head of afterStatement, tail afterStatement
-getNextStatement beforeStatement currentStatement afterStatement = do
+getNextStatement beforeStatement currentStatement afterStatement =
     if checkEndOfStatement (afterStatement !! 0)
     then FileParsingInformation beforeStatement (currentStatement ++ [(afterStatement !! 0)]) (tail afterStatement)
     else (getNextStatement beforeStatement (currentStatement ++ [(afterStatement !! 0)]) (tail afterStatement))
 
 checkEndOfStatement :: Char -> Bool
-checkEndOfStatement character = do
+checkEndOfStatement character =
     if character == ';'
     then True
     else False
@@ -101,7 +96,3 @@ splitStringOnDelimeter "" delimeter = [""]
 splitStringOnDelimeter (h:t) delimeter | h == delimeter = "" : split
                                        | otherwise = (h : sh) : st
     where split@(sh:st) = splitStringOnDelimeter t delimeter
-
-successOrNothing :: (ExitCode, a, b) -> Maybe a
-successOrNothing (exitCode, output, _) =
-  if exitCode == ExitSuccess then Just output else Nothing
