@@ -1,11 +1,9 @@
 module FileParse
-    (parseAndTestFileFirst,
-    parseAndTestFile,
+    (parseAndTestFile,
     getNextStatement,
     checkEndOfStatement,
     exec,
     FileParsingInformation  (..),
-    ParseAndTestInformation  (..),
     ParseAndTestInformationOutput (..)
     ) where
 
@@ -23,11 +21,8 @@ data FileParsingInformation = FileParsingInformation{ beforeStatement :: String,
 -- instance Eq FileParsingInformation where
 --   (FileParsingInformation) (FileParsingInformation before)
 
-data ParseAndTestInformation = ParseAndTestInformation { statements :: FileParsingInformation,
-                                                         testCommand :: String } deriving (Eq, Show)
-
-data ParseAndTestInformationOutput = ParseAndTestInformationOutput { statementsOutput :: FileParsingInformation,
-                                                         testCommandSecond :: String ,
+data ParseAndTestInformationOutput = ParseAndTestInformationOutput { allStatements :: FileParsingInformation,
+                                                         testCommand :: String,
                                                          commandOutput :: IO String }
 
 -- Credits to Chris Taylor from https://stackoverflow.com/questions/20645805/haskell-concat-two-io-strings
@@ -37,32 +32,19 @@ ms1 +++ ms2 = do
     s2 <- ms2
     return $ s1 ++ s2
 
--- First parse of the file contents
--- Receives "" "" contentOfFile, testCommand
--- Output statement "" contentOfFile-statement, testCommand, CommandOutput
-parseAndTestFileFirst :: ParseAndTestInformation -> ParseAndTestInformationOutput
-parseAndTestFileFirst (ParseAndTestInformation (FileParsingInformation beforeStatement statement afterStatement) testCommand) = do
-    let (FileParsingInformation nextBeforeStatement nextStatement nextAfterStatement) = (getNextStatement beforeStatement statement afterStatement)
-
-    -- Run Tests
-    let commandOutput = exec testCommand nextStatement
-    if length nextAfterStatement == 1
-    then (ParseAndTestInformationOutput (FileParsingInformation (nextBeforeStatement ++ nextStatement) "" nextAfterStatement) testCommand commandOutput)
-    else parseAndTestFile (ParseAndTestInformationOutput (FileParsingInformation (nextBeforeStatement ++ nextStatement) "" nextAfterStatement) testCommand commandOutput)
-
 -- Second onwards passing of the file contents
 -- Receives statement "" contentOfFile-statement, testCommand, CommandOutput
 -- Output statement "" contentOfFile-statement, testCommand, CommandOutput
 -- Finishes when the file is completely parsed
 parseAndTestFile :: ParseAndTestInformationOutput -> ParseAndTestInformationOutput
-parseAndTestFile (ParseAndTestInformationOutput (FileParsingInformation beforeStatement statement afterStatement) testCommandSecond allCommandOutputs) = do
+parseAndTestFile (ParseAndTestInformationOutput (FileParsingInformation beforeStatement statement afterStatement) testCommand allCommandOutputs) = do
     let FileParsingInformation nextBeforeStatement nextStatement nextAfterStatement = (getNextStatement beforeStatement statement afterStatement)
 
     -- Run Tests
-    let output = allCommandOutputs +++ (exec testCommandSecond nextStatement)
+    let output = allCommandOutputs +++ (exec testCommand nextStatement)
     if length nextAfterStatement == 0
-    then (ParseAndTestInformationOutput (FileParsingInformation (nextBeforeStatement ++ nextStatement) "" nextAfterStatement) testCommandSecond output)
-    else parseAndTestFile (ParseAndTestInformationOutput (FileParsingInformation (nextBeforeStatement ++ nextStatement) "" nextAfterStatement) testCommandSecond output)
+    then (ParseAndTestInformationOutput (FileParsingInformation (nextBeforeStatement ++ nextStatement) "" nextAfterStatement) testCommand output)
+    else parseAndTestFile (ParseAndTestInformationOutput (FileParsingInformation (nextBeforeStatement ++ nextStatement) "" nextAfterStatement) testCommand output)
 
 -- End of file
 -- Checks for end of file

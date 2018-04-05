@@ -27,7 +27,7 @@ main = do
     hClose backupHandle
 
     -- Testing parsing
-    let (ParseAndTestInformationOutput (FileParsingInformation beforeStatement statement afterStatement) testCommand output) = (parseAndTestFileFirst $ ParseAndTestInformation (FileParsingInformation "" "" contents) command)
+    let (ParseAndTestInformationOutput (FileParsingInformation beforeStatement statement afterStatement) testCommand output) = (parseAndTestFile $ ParseAndTestInformationOutput (FileParsingInformation "" "" contents) command (return ("")))
     putStrLn(beforeStatement)
 --     hPutStrLn output
     -- Create the new file with the handler
