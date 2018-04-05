@@ -16,6 +16,16 @@ main = hspec $ do
         it "should return false when passed a character other than ';'" $ do
           checkEndOfStatement 'f' `shouldBe` False
 
+      describe "splitStringOnDelimeter" $ do
+              it "should return an empty list if passed nothing" $ do
+                splitStringOnDelimeter "" ',' `shouldBe` [""]
+
+              it "should return a list that that is split on the delimiter of the string passed" $ do
+                splitStringOnDelimeter "this is a sentence with spaces" ' ' `shouldBe` ["this", "is", "a", "sentence", "with", "spaces"]
+
+              it "should return a list with one item if the delimeter is not in the string" $ do
+                splitStringOnDelimeter "thisIsASentenceWithNoSpaces" ' ' `shouldBe` ["thisIsASentenceWithNoSpaces"]
+
       describe "getNextStatememt" $ do
         it "should return the ';' character when passed a ';' character" $ do
           (getNextStatement "" "" ";") `shouldBe` (FileParsingInformation "" ";" "")
@@ -35,12 +45,13 @@ main = hspec $ do
         it "should pass all values inclusively when it contains the ';' character" $ do
           (getNextStatement "" "" "HELLO WORLD; WORLD, HELLO") `shouldBe` (FileParsingInformation "" "HELLO WORLD;" " WORLD, HELLO")
 
-      describe "splitStringOnDelimeter" $ do
-        it "should return an empty list if passed nothing" $ do
-          splitStringOnDelimeter "" ',' `shouldBe` [""]
+      describe "checkEndOfStatement" $ do
+        it "should return true if the character is ;" $ do
+          checkEndOfStatement ';' `shouldBe` True
 
-        it "should return a list that that is split on the delimiter of the string passed" $ do
-          splitStringOnDelimeter "this is a sentence with spaces" ' ' `shouldBe` ["this", "is", "a", "sentence", "with", "spaces"]
-
-        it "should return a list with one item if the delimeter is not in the string" $ do
-          splitStringOnDelimeter "thisIsASentenceWithNoSpaces" ' ' `shouldBe` ["thisIsASentenceWithNoSpaces"]
+        it "should return false if the character is something else" $ do
+          checkEndOfStatement ':' `shouldBe` False
+          checkEndOfStatement 'a' `shouldBe` False
+          checkEndOfStatement 'j' `shouldBe` False
+          checkEndOfStatement '@' `shouldBe` False
+          checkEndOfStatement '"' `shouldBe` False
