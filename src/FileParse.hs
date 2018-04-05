@@ -5,7 +5,8 @@ module FileParse
     exec,
     FileParsingInformation  (..),
     ParseAndTestInformationOutput (..),
-    splitStringOnDelimeter
+    splitStringOnDelimeter,
+    (+++)
     ) where
 
 import Data.Char
@@ -70,9 +71,9 @@ exec :: String -> String -> IO String
 exec cmd deletedStatement = do
     let splitCommand = splitStringOnDelimeter cmd ' '
     (exitCode, output, errOutput) <- readProcessWithExitCode (head splitCommand) (tail splitCommand) ""
-    if exitCode == ExitSuccess
-    then return ("Deleting the statement " ++ deletedStatement ++ " did not fail any tests. Please look into this!\n\n")
-    else return ("")
+    case exitCode of
+     ExitSuccess -> return ("Deleting the statement " ++ deletedStatement ++ " did not fail any tests. Please look into this!\n\n")
+     _           -> return ("")
 
 splitStringOnDelimeter :: String -> Char -> [String]
 splitStringOnDelimeter "" delimeter = [""]

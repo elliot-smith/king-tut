@@ -55,3 +55,14 @@ main = hspec $ do
           checkEndOfStatement 'j' `shouldBe` False
           checkEndOfStatement '@' `shouldBe` False
           checkEndOfStatement '"' `shouldBe` False
+
+      describe "(+++)" $ do
+        it "concat two monad strings together" $ do
+          concatOutput <- (return "firstPart") +++ (return "secondPart")
+          concatOutput `shouldBe` "firstPartsecondPart"
+
+      describe "exec" $ do
+        it "Return a response if the command succeeds" $ do
+          commandOutput <- exec "dir" "deletedStatement"
+          commandOutput `shouldBe` "Deleting the statement deletedStatement did not fail any tests. Please look into this!\n\n"
+
