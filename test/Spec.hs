@@ -34,3 +34,13 @@ main = hspec $ do
 
         it "should pass all values inclusively when it contains the ';' character" $ do
           (getNextStatement "" "" "HELLO WORLD; WORLD, HELLO") `shouldBe` (FileParsingInformation "" "HELLO WORLD;" " WORLD, HELLO")
+
+      describe "splitStringOnDelimeter" $ do
+        it "should return an empty list if passed nothing" $ do
+          splitStringOnDelimeter "" ',' `shouldBe` [""]
+
+        it "should return a list that that is split on the delimiter of the string passed" $ do
+          splitStringOnDelimeter "this is a sentence with spaces" ' ' `shouldBe` ["this", "is", "a", "sentence", "with", "spaces"]
+
+        it "should return a list with one item if the delimeter is not in the string" $ do
+          splitStringOnDelimeter "thisIsASentenceWithNoSpaces" ' ' `shouldBe` ["thisIsASentenceWithNoSpaces"]

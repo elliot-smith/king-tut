@@ -4,7 +4,8 @@ module FileParse
     checkEndOfStatement,
     exec,
     FileParsingInformation  (..),
-    ParseAndTestInformationOutput (..)
+    ParseAndTestInformationOutput (..),
+    splitStringOnDelimeter
     ) where
 
 import Data.Char
