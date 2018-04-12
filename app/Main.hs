@@ -18,7 +18,7 @@ main = do
     if doAllTestsPass
        then putStrLn "All commands pass"
        else do putStrLn "Commands all fail"
-               writeToKingTutOutputFile $ return ("\n\nThe command '" ++ command ++ "' failed to run. Please fix your tests or the command and try again run again.")
+               writeToKingTutOutputFile $ return ("\n\nThe command '" ++ command ++ "' failed to run. Please fix your tests or the command and try and run it again.")
                exitWith $ ExitFailure 1
 
     -- Create handles for both the fileName and the backup file
