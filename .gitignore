@@ -7,6 +7,7 @@ king-tut.cabal
 # Tut outputs
 *.tut.tmp
 *.tut.backup
+king-tut-output.txt
 
 # Haskell Output
 Main.exe

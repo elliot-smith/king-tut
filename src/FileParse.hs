@@ -6,7 +6,8 @@ module FileParse
     FileParsingInformation  (..),
     ParseAndTestInformationOutput (..),
     splitStringOnDelimeter,
-    (+++)
+    (+++),
+    parseToFileOutput
     ) where
 
 import Data.Char
@@ -82,3 +83,11 @@ splitStringOnDelimeter "" delimeter = [""]
 splitStringOnDelimeter (h:t) delimeter | h == delimeter = "" : split
                                        | otherwise = (h : sh) : st
     where split@(sh:st) = splitStringOnDelimeter t delimeter
+
+-- Parse file output to notify runner that it was successful
+parseToFileOutput :: IO String -> String -> IO String
+parseToFileOutput parseOutputIO filename = do
+   parseOutput <- parseOutputIO
+   if parseOutput == ""
+     then return ("\n\nThe file " ++ filename ++ " successfully failed when lines where deleted! Well done!")
+     else return ("\n\n" ++ parseOutput)

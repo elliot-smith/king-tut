@@ -12,8 +12,8 @@ main = do
     let fileName = "app/test-file.txt"
     let currDir = withCurrentDirectory
     let backupFile = (fileName ++ ".tut.backup")
-    let tempFile = (fileName ++ ".tut.tmp")
-    let command = "echo hello world"
+    let kingTutOutput = ("king-tut-output.txt")
+    let command = "F:/Developer/tools/Node/npm.cmd run test"
 
     -- Create handles for both the fileName and the backup file
     originalFileHandle <- openFile fileName ReadMode
@@ -31,9 +31,9 @@ main = do
     putStrLn(beforeStatement)
 --     hPutStrLn output
     -- Create the new file with the handler
-    tempFileHandle <- openFile tempFile WriteMode
-    output >>= hPutStr tempFileHandle
-    hClose tempFileHandle
+    kingTutOutputHandle <- openFile kingTutOutput AppendMode
+    (parseToFileOutput output fileName) >>= hPutStr kingTutOutputHandle
+    hClose kingTutOutputHandle
 
     -- Change the original file to remove the statement
     --removeFile fileName
@@ -45,4 +45,3 @@ main = do
     removeFile fileName
     renameFile backupFile fileName
     putStrLn ("Finished!")
-
