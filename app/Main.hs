@@ -10,7 +10,6 @@ import GHC.IO.Exception
 
 main = do
     let fileName = "app/test-file.txt"
-    let currDir = withCurrentDirectory
     let backupFile = (fileName ++ ".tut.backup")
     let kingTutOutput = ("king-tut-output.txt")
     let command = "F:/Developer/tools/Node/npm.cmd run test"
