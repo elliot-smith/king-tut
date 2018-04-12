@@ -5,14 +5,21 @@ import System.IO
 import System.Directory
 import Data.List
 import System.Process
+import System.Exit
 import GHC.IO.Exception
 
 
 main = do
     let fileName = "app/test-file.txt"
     let backupFile = (fileName ++ ".tut.backup")
-    let kingTutOutput = ("king-tut-output.txt")
     let command = "F:/Developer/tools/Node/npm.cmd run test"
+
+    doAllTestsPass <- executeSuccessful command
+    if doAllTestsPass
+       then putStrLn "All commands pass"
+       else do putStrLn "Commands all fail"
+               writeToKingTutOutputFile $ return ("\n\nThe command '" ++ command ++ "' failed to run. Please fix your tests or the command and try again run again.")
+               exitWith $ ExitFailure 1
 
     -- Create handles for both the fileName and the backup file
     originalFileHandle <- openFile fileName ReadMode
@@ -30,10 +37,7 @@ main = do
     putStrLn(beforeStatement)
 --     hPutStrLn output
     -- Create the new file with the handler
-    kingTutOutputHandle <- openFile kingTutOutput AppendMode
-    (parseToFileOutput output fileName) >>= hPutStr kingTutOutputHandle
-    hClose kingTutOutputHandle
-
+    writeToKingTutOutputFile (parseToFileOutput output fileName)
     -- Change the original file to remove the statement
     --removeFile fileName
     --renameFile tempFile fileName
@@ -43,4 +47,7 @@ main = do
     -- Revert the file back to it's original state and delete other files
     removeFile fileName
     renameFile backupFile fileName
+
+
     putStrLn ("Finished!")
+

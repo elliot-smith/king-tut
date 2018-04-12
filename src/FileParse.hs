@@ -2,12 +2,14 @@ module FileParse
     (parseAndTestFile,
     getNextStatement,
     checkEndOfStatement,
-    exec,
+    executeAndReturnOutput,
     FileParsingInformation  (..),
     ParseAndTestInformationOutput (..),
     splitStringOnDelimeter,
     (+++),
-    parseToFileOutput
+    parseToFileOutput,
+    executeSuccessful,
+    writeToKingTutOutputFile
     ) where
 
 import Data.Char
@@ -44,7 +46,7 @@ parseAndTestFile (ParseAndTestInformationOutput (FileParsingInformation beforeSt
     let FileParsingInformation nextBeforeStatement nextStatement nextAfterStatement = (getNextStatement beforeStatement statement afterStatement)
 
     -- Run Tests
-    let output = allCommandOutputs +++ (exec testCommand nextStatement)
+    let output = allCommandOutputs +++ (executeAndReturnOutput testCommand nextStatement)
     if length nextAfterStatement == 0
     then (ParseAndTestInformationOutput (FileParsingInformation (nextBeforeStatement ++ nextStatement) "" nextAfterStatement) testCommand output)
     else parseAndTestFile (ParseAndTestInformationOutput (FileParsingInformation (nextBeforeStatement ++ nextStatement) "" nextAfterStatement) testCommand output)
@@ -68,13 +70,20 @@ checkEndOfStatement character =
     then True
     else False
 
-exec :: String -> String -> IO String
-exec cmd deletedStatement = do
+executeAndReturnOutput :: String -> String -> IO String
+executeAndReturnOutput cmd deletedStatement = do
+    isExecuteSuccessful <- executeSuccessful cmd
+    case isExecuteSuccessful of
+     True -> return ("Deleting the statement " ++ deletedStatement ++ " did not fail any tests. Please look into this!\n\n")
+     _           -> return ("")
+
+executeSuccessful :: String -> IO Bool
+executeSuccessful cmd = do
     let splitCommand = splitStringOnDelimeter cmd ' '
     (exitCode, output, errOutput) <- readProcessWithExitCode (head splitCommand) (tail splitCommand) ""
     case exitCode of
-     ExitSuccess -> return ("Deleting the statement " ++ deletedStatement ++ " did not fail any tests. Please look into this!\n\n")
-     _           -> return ("")
+     ExitSuccess -> return (True)
+     _           -> return (False)
 
 splitStringOnDelimeter :: String -> Char -> [String]
 splitStringOnDelimeter "" delimeter = [""]
@@ -91,3 +100,11 @@ parseToFileOutput parseOutputIO filename = do
    if parseOutput == ""
      then return ("\n\nThe file " ++ filename ++ " successfully failed when lines where deleted! Well done!")
      else return ("\n\n" ++ parseOutput)
+
+writeToKingTutOutputFile :: IO String -> IO Bool
+writeToKingTutOutputFile outputText = do
+    let kingTutOutputFile = ("king-tut-output.txt")
+    kingTutOutputHandle <- openFile kingTutOutputFile AppendMode
+    outputText >>= hPutStr kingTutOutputHandle
+    hClose kingTutOutputHandle
+    return True
