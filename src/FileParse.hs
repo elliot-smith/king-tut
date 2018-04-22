@@ -21,14 +21,15 @@ import GHC.IO.Exception
 
 data FileParsingInformation = FileParsingInformation{ beforeStatement :: String,
                                                       statement :: String,
-                                                      afterStatement :: String } deriving (Eq, Show)
+                                                      afterStatement :: String} deriving (Eq, Show)
 
 -- instance Eq FileParsingInformation where
 --   (FileParsingInformation) (FileParsingInformation before)
 
 data ParseAndTestInformationOutput = ParseAndTestInformationOutput { allStatements :: FileParsingInformation,
                                                          testCommand :: String,
-                                                         commandOutput :: IO String }
+                                                         commandOutput :: IO String,
+                                                         fileName :: String }
 
 -- Credits to Chris Taylor from https://stackoverflow.com/questions/20645805/haskell-concat-two-io-strings
 (+++) :: Monad m => m [a] -> m [a] -> m [a]
@@ -42,14 +43,23 @@ ms1 +++ ms2 = do
 -- Output statement "" contentOfFile-statement, testCommand, CommandOutput
 -- Finishes when the file is completely parsed
 parseAndTestFile :: ParseAndTestInformationOutput -> ParseAndTestInformationOutput
-parseAndTestFile (ParseAndTestInformationOutput (FileParsingInformation beforeStatement statement afterStatement) testCommand allCommandOutputs) = do
-    let FileParsingInformation nextBeforeStatement nextStatement nextAfterStatement = (getNextStatement beforeStatement statement afterStatement)
+parseAndTestFile (ParseAndTestInformationOutput (FileParsingInformation beforeStatement statement afterStatement) testCommand allCommandOutputs fileName) =
+    do let FileParsingInformation nextBeforeStatement nextStatement nextAfterStatement = (getNextStatement beforeStatement statement afterStatement)
+       let isFileOverwritten = writeToOriginalFile (nextBeforeStatement ++ nextAfterStatement) fileName
+       case isFileOverwritten of
+        returnIOBool -> testFile (ParseAndTestInformationOutput (FileParsingInformation nextBeforeStatement nextStatement nextAfterStatement) testCommand allCommandOutputs fileName)
+        _ -> (ParseAndTestInformationOutput (FileParsingInformation nextBeforeStatement nextStatement nextAfterStatement) testCommand allCommandOutputs fileName)
 
-    -- Run Tests
+testFile :: ParseAndTestInformationOutput -> ParseAndTestInformationOutput
+testFile (ParseAndTestInformationOutput (FileParsingInformation nextBeforeStatement nextStatement nextAfterStatement) testCommand allCommandOutputs fileName) = do
     let output = allCommandOutputs +++ (executeAndReturnOutput testCommand nextStatement)
-    if length nextAfterStatement == 0
-    then (ParseAndTestInformationOutput (FileParsingInformation (nextBeforeStatement ++ nextStatement) "" nextAfterStatement) testCommand output)
-    else parseAndTestFile (ParseAndTestInformationOutput (FileParsingInformation (nextBeforeStatement ++ nextStatement) "" nextAfterStatement) testCommand output)
+
+    case length nextAfterStatement of
+      0 -> (ParseAndTestInformationOutput (FileParsingInformation (nextBeforeStatement ++ nextStatement) "" nextAfterStatement) testCommand output fileName)
+      _ -> parseAndTestFile (ParseAndTestInformationOutput (FileParsingInformation (nextBeforeStatement ++ nextStatement) "" nextAfterStatement) testCommand output fileName)
+
+returnIOBool :: IO Bool
+returnIOBool = return True
 
 -- End of file
 -- Checks for end of file
@@ -106,5 +116,15 @@ writeToKingTutOutputFile outputText = do
     let kingTutOutputFile = ("king-tut-output.txt")
     kingTutOutputHandle <- openFile kingTutOutputFile AppendMode
     outputText >>= hPutStr kingTutOutputHandle
+    hClose kingTutOutputHandle
+    return True
+
+writeToOriginalFile :: String -> String -> IO Bool
+writeToOriginalFile newFileContents fileName = do
+    kingTutOutputHandle <- openFile fileName WriteMode
+    hPutStr kingTutOutputHandle newFileContents
+    hClose kingTutOutputHandle
+    kingTutOutputHandle <- openFile "hello" WriteMode
+    hPutStr kingTutOutputHandle newFileContents
     hClose kingTutOutputHandle
     return True

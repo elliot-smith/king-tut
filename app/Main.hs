@@ -10,16 +10,16 @@ import GHC.IO.Exception
 
 
 main = do
-    let fileName = "app/test-file.txt"
+    let fileName = "calculator/ts/src/add.ts"
     let backupFile = (fileName ++ ".tut.backup")
     let command = "F:/Developer/tools/Node/npm.cmd run test"
 
-    doAllTestsPass <- executeSuccessful command
-    if doAllTestsPass
-       then putStrLn "All commands pass"
-       else do putStrLn "Commands all fail"
-               writeToKingTutOutputFile $ return ("\n\nThe command '" ++ command ++ "' failed to run. Please fix your tests or the command and try and run it again.")
-               exitWith $ ExitFailure 1
+--     doAllTestsPass <- executeSuccessful command
+--     if doAllTestsPass
+--        then putStrLn "All commands pass"
+--        else do putStrLn "Commands all fail"
+--                writeToKingTutOutputFile $ return ("\n\nThe command '" ++ command ++ "' failed to run. Please fix your tests or the command and try and run it again.")
+--                exitWith $ ExitFailure 1
 
     -- Create handles for both the fileName and the backup file
     originalFileHandle <- openFile fileName ReadMode
@@ -33,7 +33,7 @@ main = do
     hClose backupHandle
 
     -- Testing parsing
-    let (ParseAndTestInformationOutput (FileParsingInformation beforeStatement statement afterStatement) testCommand output) = (parseAndTestFile $ ParseAndTestInformationOutput (FileParsingInformation "" "" contents) command (return ("")))
+    let (ParseAndTestInformationOutput (FileParsingInformation beforeStatement statement afterStatement) testCommand output fileName) = (parseAndTestFile $ ParseAndTestInformationOutput (FileParsingInformation "" "" contents) command (return ("")) fileName )
     putStrLn(beforeStatement)
 --     hPutStrLn output
     -- Create the new file with the handler
