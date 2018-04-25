@@ -13,7 +13,7 @@ main = do
 
     doAllTestsPass <- executeSuccessful command
     if doAllTestsPass
-       then putStrLn "All commands pass"
+       then putStrLn ("The command `" ++ command ++ "` can be executed")
        else do putStrLn "Commands all fail"
                let errorMessage = "\n\nThe command '" ++ command ++ "' failed to run. Please fix your tests or the command and try and run it again."
                _ <- writeToKingTutOutputFile errorMessage

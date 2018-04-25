@@ -42,7 +42,7 @@ parseAndTestFile parsedInformation = do
    let FileParsingInformation beforeNextStatement nextStatement afterNextStatement = (getNextStatement beforeStatement "" afterStatement)
    isFileOverwritten <- (writeToOriginalFile (beforeNextStatement ++ afterNextStatement) testFileName)
 
-   let parseAndTestFileReturnObject = return (ParseAndTestInformationOutput (FileParsingInformation (beforeNextStatement ++ nextStatement) "" afterNextStatement) testFileCommand allCommandOutputs testFileName)
+   let parseAndTestFileReturnObject = return (ParseAndTestInformationOutput (FileParsingInformation beforeNextStatement nextStatement afterNextStatement) testFileCommand allCommandOutputs testFileName)
    case isFileOverwritten of
     True -> testFile parseAndTestFileReturnObject
     False -> parseAndTestFileReturnObject
@@ -106,8 +106,12 @@ parseToFileOutput parseOutput filename = do
 --    parseOutput <- parseOutputIO
    let successMessage = "\n\nThe file " ++ filename ++ " successfully failed when lines where deleted! Well done!"
    if parseOutput == ""
-     then return (successMessage)
-     else return ("\n\n" ++ parseOutput)
+     then do
+          putStrLn "All tests failed. Congratulations!"
+          return (successMessage)
+     else do
+          putStrLn "At least one test passed. Please check the file king-tut-output.txt for more information"
+          return ("\n\n" ++ parseOutput)
 
 writeToKingTutOutputFile :: String -> IO Bool
 writeToKingTutOutputFile commandOutputText = do
