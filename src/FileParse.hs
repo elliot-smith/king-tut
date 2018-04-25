@@ -1,13 +1,13 @@
 module FileParse
     (kingTut,
-    parseAndTestFile,
+    parseAndOverwriteOriginalFile,
     getNextStatement,
     checkEndOfStatement,
     executeAndReturnOutput,
     FileParsingInformation  (..),
     ParseAndTestInformationOutput (..),
     splitStringOnDelimeter,
-    parseToFileOutput,
+    parseTestCommandOutputFile,
     executeSuccessful,
     writeToKingTutOutputFile
     ) where
@@ -20,9 +20,6 @@ data FileParsingInformation = FileParsingInformation{ beforeCurrentStatement :: 
                                                       currentStatement :: String,
                                                       afterCurrentStatement :: String} deriving (Eq, Show)
 
--- instance Eq FileParsingInformation where
---   (FileParsingInformation) (FileParsingInformation before)
-
 data ParseAndTestInformationOutput = ParseAndTestInformationOutput { allStatements :: FileParsingInformation,
                                                          testCommand :: String,
                                                          commandOutput :: String,
@@ -30,22 +27,18 @@ data ParseAndTestInformationOutput = ParseAndTestInformationOutput { allStatemen
 
 kingTut :: String -> String -> String -> IO ParseAndTestInformationOutput
 kingTut fileContents kingTutTestCommand testingFileName = do
-   parseAndTestFile (return (ParseAndTestInformationOutput (FileParsingInformation "" "" fileContents) kingTutTestCommand "" testingFileName))
+   parseAndOverwriteOriginalFile (return (ParseAndTestInformationOutput (FileParsingInformation "" "" fileContents) kingTutTestCommand "" testingFileName))
 
--- Second onwards passing of the file contents
--- Receives statement "" contentOfFile-statement, testCommand, CommandOutput
--- Output statement "" contentOfFile-statement, testCommand, CommandOutput
--- Finishes when the file is completely parsed
-parseAndTestFile :: IO ParseAndTestInformationOutput -> IO ParseAndTestInformationOutput
-parseAndTestFile parsedInformation = do
+parseAndOverwriteOriginalFile :: IO ParseAndTestInformationOutput -> IO ParseAndTestInformationOutput
+parseAndOverwriteOriginalFile parsedInformation = do
    (ParseAndTestInformationOutput (FileParsingInformation beforeStatement _ afterStatement) testFileCommand allCommandOutputs testFileName) <- parsedInformation
    let FileParsingInformation beforeNextStatement nextStatement afterNextStatement = (getNextStatement beforeStatement "" afterStatement)
    isFileOverwritten <- (writeToOriginalFile (beforeNextStatement ++ afterNextStatement) testFileName)
 
-   let parseAndTestFileReturnObject = return (ParseAndTestInformationOutput (FileParsingInformation beforeNextStatement nextStatement afterNextStatement) testFileCommand allCommandOutputs testFileName)
+   let parseAndOverwriteOriginalFileReturnObject = return (ParseAndTestInformationOutput (FileParsingInformation beforeNextStatement nextStatement afterNextStatement) testFileCommand allCommandOutputs testFileName)
    case isFileOverwritten of
-    True -> testFile parseAndTestFileReturnObject
-    False -> parseAndTestFileReturnObject
+    True -> testFile parseAndOverwriteOriginalFileReturnObject
+    False -> parseAndOverwriteOriginalFileReturnObject
 
 testFile :: IO ParseAndTestInformationOutput -> IO ParseAndTestInformationOutput
 testFile testFileInput = do
@@ -56,16 +49,11 @@ testFile testFileInput = do
     let testFileReturnObject = return (ParseAndTestInformationOutput (FileParsingInformation (beforeTestStatement ++ currentTestStatement) "" afterTestStatement) commandToTestFile output fileNameThatIsTested)
     case length afterTestStatement of
       0 -> testFileReturnObject
-      _ -> parseAndTestFile testFileReturnObject
+      _ -> parseAndOverwriteOriginalFile testFileReturnObject
 
--- End of file
--- Checks for end of file
 getNextStatement :: String -> String -> String -> FileParsingInformation
 getNextStatement beforeNextStatement nextStatement "" = FileParsingInformation beforeNextStatement nextStatement ""
 
---Parse File
--- If the next statement passes checkEndOfStatement it then returns the previous beforeStatement, currentStatement plus head of afterStatement, tail afterStatement
--- If it doesn't then it calls itself again with beforeStatement, currentStatement plus head of afterStatement, tail afterStatement
 getNextStatement beforeNextStatement nextStatement afterNextStatement =
     if checkEndOfStatement (afterNextStatement !! 0)
     then FileParsingInformation beforeNextStatement (nextStatement ++ [(afterNextStatement !! 0)]) (tail afterNextStatement)
@@ -100,10 +88,8 @@ splitStringOnDelimeter (h:t) delimeter | h == delimeter = "" : split
                                        | otherwise = (h : sh) : st
     where split@(sh:st) = splitStringOnDelimeter t delimeter
 
--- Parse file output to notify runner that it was successful
-parseToFileOutput :: String -> String -> IO String
-parseToFileOutput parseOutput filename = do
---    parseOutput <- parseOutputIO
+parseTestCommandOutputFile :: String -> String -> IO String
+parseTestCommandOutputFile parseOutput filename = do
    let successMessage = "\n\nThe file " ++ filename ++ " successfully failed when lines where deleted! Well done!"
    if parseOutput == ""
      then do

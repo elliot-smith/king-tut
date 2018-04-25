@@ -11,6 +11,7 @@ main = do
     let backupFile = (fileNameToTest ++ ".tut.backup")
     let command = "F:/Developer/tools/Node/npm.cmd run test"
 
+    -- Tests the command above to ensure that it passes normally
     doAllTestsPass <- executeSuccessful command
     if doAllTestsPass
        then putStrLn ("The command `" ++ command ++ "` can be executed")
@@ -23,7 +24,6 @@ main = do
     originalFileHandle <- openFile fileNameToTest ReadMode
     backupHandle <- openFile backupFile WriteMode
 
-    -- Passes the contents of the file into contents
     contents <- hGetContents originalFileHandle
 
     -- Creates the backup file
@@ -32,15 +32,10 @@ main = do
 
     -- Testing parsing
     (ParseAndTestInformationOutput (FileParsingInformation _ _ _) _ output _) <- (kingTut contents command fileNameToTest)
---     hPutStrLn output
-    -- Create the new file with the handler
-    appendedFileContents <- (parseToFileOutput output fileNameToTest)
-    _ <- writeToKingTutOutputFile appendedFileContents
-    -- Change the original file to remove the statement
-    --removeFile fileNameToTest
-    --renameFile tempFile fileNameToTest
 
-    -- Run the tests
+    -- Modify the output file for King Tut so that users can see how their application fared
+    appendedFileContents <- (parseTestCommandOutputFile output fileNameToTest)
+    _ <- writeToKingTutOutputFile appendedFileContents
 
     -- Revert the file back to it's original state and delete other files
     removeFile fileNameToTest

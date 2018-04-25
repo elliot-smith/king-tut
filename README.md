@@ -13,7 +13,7 @@ during your tests but King Tut is designed to test that each line of code is tes
 produce an output file called `king-tut-output.txt` that will contain all lines which were not covered.
 
 TODO:
-1. Modify original file and test
+1. Modify original file and test (completed!)
 2. Select a file from a list of available options (i.e. Glob)
 3. Use an environment file to pass through all variables
 4. Modify test files to focus only on that file
