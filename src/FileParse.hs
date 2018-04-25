@@ -7,7 +7,6 @@ module FileParse
     FileParsingInformation  (..),
     ParseAndTestInformationOutput (..),
     splitStringOnDelimeter,
-    (+++),
     parseToFileOutput,
     executeSuccessful,
     writeToKingTutOutputFile
@@ -29,16 +28,9 @@ data ParseAndTestInformationOutput = ParseAndTestInformationOutput { allStatemen
                                                          commandOutput :: String,
                                                          fileName :: String } deriving (Eq, Show)
 
--- Credits to Chris Taylor from https://stackoverflow.com/questions/20645805/haskell-concat-two-io-strings
-(+++) :: Monad m => m [a] -> m [a] -> m [a]
-ms1 +++ ms2 = do
-    s1 <- ms1
-    s2 <- ms2
-    return $ s1 ++ s2
-
 kingTut :: String -> String -> String -> IO ParseAndTestInformationOutput
-kingTut fileContents testCommand fileName = do
-   parseAndTestFile (return (ParseAndTestInformationOutput (FileParsingInformation "" "" fileContents) testCommand "" fileName))
+kingTut fileContents kingTutTestCommand testingFileName = do
+   parseAndTestFile (return (ParseAndTestInformationOutput (FileParsingInformation "" "" fileContents) kingTutTestCommand "" testingFileName))
 
 -- Second onwards passing of the file contents
 -- Receives statement "" contentOfFile-statement, testCommand, CommandOutput
@@ -46,20 +38,22 @@ kingTut fileContents testCommand fileName = do
 -- Finishes when the file is completely parsed
 parseAndTestFile :: IO ParseAndTestInformationOutput -> IO ParseAndTestInformationOutput
 parseAndTestFile parsedInformation = do
-   (ParseAndTestInformationOutput (FileParsingInformation beforeStatement currentStatement afterStatement) testCommand allCommandOutputs fileName) <- parsedInformation
-   let FileParsingInformation nextBeforeStatement nextStatement nextAfterStatement = (getNextStatement beforeStatement currentStatement afterStatement)
-   isFileOverwritten <- (writeToOriginalFile (nextBeforeStatement ++ nextAfterStatement) fileName)
+   (ParseAndTestInformationOutput (FileParsingInformation beforeStatement _ afterStatement) testFileCommand allCommandOutputs testFileName) <- parsedInformation
+   let FileParsingInformation beforeNextStatement nextStatement afterNextStatement = (getNextStatement beforeStatement "" afterStatement)
+   isFileOverwritten <- (writeToOriginalFile (beforeNextStatement ++ afterNextStatement) testFileName)
+
+   let parseAndTestFileReturnObject = return (ParseAndTestInformationOutput (FileParsingInformation (beforeNextStatement ++ nextStatement) "" afterNextStatement) testFileCommand allCommandOutputs testFileName)
    case isFileOverwritten of
-    True -> testFile (return (ParseAndTestInformationOutput (FileParsingInformation nextBeforeStatement nextStatement nextAfterStatement) testCommand allCommandOutputs fileName))
-    False -> return (ParseAndTestInformationOutput (FileParsingInformation nextBeforeStatement nextStatement nextAfterStatement) testCommand allCommandOutputs fileName)
+    True -> testFile parseAndTestFileReturnObject
+    False -> parseAndTestFileReturnObject
 
 testFile :: IO ParseAndTestInformationOutput -> IO ParseAndTestInformationOutput
 testFile testFileInput = do
-    (ParseAndTestInformationOutput (FileParsingInformation beforeTestStatement currentTestStatement afterTestStatement) testCommand allCommandOutputs fileName) <- testFileInput
-    outputs <- (executeAndReturnOutput testCommand currentTestStatement)
+    (ParseAndTestInformationOutput (FileParsingInformation beforeTestStatement currentTestStatement afterTestStatement) commandToTestFile allCommandOutputs fileNameThatIsTested) <- testFileInput
+    outputs <- (executeAndReturnOutput commandToTestFile currentTestStatement)
     let output = allCommandOutputs ++ outputs
 
-    let testFileReturnObject = return (ParseAndTestInformationOutput (FileParsingInformation (beforeTestStatement ++ currentTestStatement) "" afterTestStatement) testCommand output fileName)
+    let testFileReturnObject = return (ParseAndTestInformationOutput (FileParsingInformation (beforeTestStatement ++ currentTestStatement) "" afterTestStatement) commandToTestFile output fileNameThatIsTested)
     case length afterTestStatement of
       0 -> testFileReturnObject
       _ -> parseAndTestFile testFileReturnObject
@@ -67,15 +61,15 @@ testFile testFileInput = do
 -- End of file
 -- Checks for end of file
 getNextStatement :: String -> String -> String -> FileParsingInformation
-getNextStatement beforeNextStatement currentNextStatement "" = FileParsingInformation beforeNextStatement currentNextStatement ""
+getNextStatement beforeNextStatement nextStatement "" = FileParsingInformation beforeNextStatement nextStatement ""
 
 --Parse File
 -- If the next statement passes checkEndOfStatement it then returns the previous beforeStatement, currentStatement plus head of afterStatement, tail afterStatement
 -- If it doesn't then it calls itself again with beforeStatement, currentStatement plus head of afterStatement, tail afterStatement
-getNextStatement beforeNextStatement currentNextStatement afterNextStatement =
+getNextStatement beforeNextStatement nextStatement afterNextStatement =
     if checkEndOfStatement (afterNextStatement !! 0)
-    then FileParsingInformation beforeNextStatement (currentNextStatement ++ [(afterNextStatement !! 0)]) (tail afterNextStatement)
-    else (getNextStatement beforeNextStatement (currentNextStatement ++ [(afterNextStatement !! 0)]) (tail afterNextStatement))
+    then FileParsingInformation beforeNextStatement (nextStatement ++ [(afterNextStatement !! 0)]) (tail afterNextStatement)
+    else (getNextStatement beforeNextStatement (nextStatement ++ [(afterNextStatement !! 0)]) (tail afterNextStatement))
 
 checkEndOfStatement :: Char -> Bool
 checkEndOfStatement character =
