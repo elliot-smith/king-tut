@@ -3,9 +3,10 @@
 
 
 ## Important commands
-    Run the main file Main -> `stack build && stack runhaskell app/main`
-Test the application -> `stack tests`
-Build the Haskell stack -> `stack build`
+1. Run the main file Main -> `stack build && stack runhaskell app/main`
+1. Test the application -> `stack tests`
+1. Build the Haskell stack -> `stack build`
+1. Watch files and check semantics -> `stack build --file-watch --pedantic`
 
 This application is designed to Test Ur Tests. Code coverage unfortunately only checks whether a statement was executed
 during your tests but King Tut is designed to test that each line of code is tested. If it is not tested, then it will

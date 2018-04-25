@@ -1,5 +1,6 @@
 module FileParse
-    (parseAndTestFile,
+    (kingTut,
+    parseAndTestFile,
     getNextStatement,
     checkEndOfStatement,
     executeAndReturnOutput,
@@ -12,10 +13,7 @@ module FileParse
     writeToKingTutOutputFile
     ) where
 
-import Data.Char
 import System.IO
-import System.Directory
-import Data.List
 import System.Process
 import GHC.IO.Exception
 
@@ -28,7 +26,7 @@ data FileParsingInformation = FileParsingInformation{ beforeStatement :: String,
 
 data ParseAndTestInformationOutput = ParseAndTestInformationOutput { allStatements :: FileParsingInformation,
                                                          testCommand :: String,
-                                                         commandOutput :: IO String,
+                                                         commandOutput :: String,
                                                          fileName :: String }
 
 -- Credits to Chris Taylor from https://stackoverflow.com/questions/20645805/haskell-concat-two-io-strings
@@ -38,25 +36,32 @@ ms1 +++ ms2 = do
     s2 <- ms2
     return $ s1 ++ s2
 
+kingTut :: String -> String -> String -> IO ParseAndTestInformationOutput
+kingTut fileContents testCommand fileName = do
+   parseAndTestFile (return (ParseAndTestInformationOutput (FileParsingInformation "" "" fileContents) testCommand "" fileName))
+
 -- Second onwards passing of the file contents
 -- Receives statement "" contentOfFile-statement, testCommand, CommandOutput
 -- Output statement "" contentOfFile-statement, testCommand, CommandOutput
 -- Finishes when the file is completely parsed
-parseAndTestFile :: ParseAndTestInformationOutput -> ParseAndTestInformationOutput
-parseAndTestFile (ParseAndTestInformationOutput (FileParsingInformation beforeStatement statement afterStatement) testCommand allCommandOutputs fileName) =
-    do let FileParsingInformation nextBeforeStatement nextStatement nextAfterStatement = (getNextStatement beforeStatement statement afterStatement)
-       let isFileOverwritten = writeToOriginalFile (nextBeforeStatement ++ nextAfterStatement) fileName
-       case isFileOverwritten of
-        returnIOBool -> testFile (ParseAndTestInformationOutput (FileParsingInformation nextBeforeStatement nextStatement nextAfterStatement) testCommand allCommandOutputs fileName)
-        _ -> (ParseAndTestInformationOutput (FileParsingInformation nextBeforeStatement nextStatement nextAfterStatement) testCommand allCommandOutputs fileName)
+parseAndTestFile :: IO ParseAndTestInformationOutput -> IO ParseAndTestInformationOutput
+parseAndTestFile parsedInformation = do
+   (ParseAndTestInformationOutput (FileParsingInformation beforeStatement statement afterStatement) testCommand allCommandOutputs fileName) <- parsedInformation
+   let FileParsingInformation nextBeforeStatement nextStatement nextAfterStatement = (getNextStatement beforeStatement statement afterStatement)
+   isFileOverwritten <- (writeToOriginalFile (nextBeforeStatement ++ nextAfterStatement) fileName)
+   case isFileOverwritten of
+    True -> return (ParseAndTestInformationOutput (FileParsingInformation nextBeforeStatement nextStatement nextAfterStatement) testCommand allCommandOutputs fileName)
+    False -> return (ParseAndTestInformationOutput (FileParsingInformation nextBeforeStatement nextStatement nextAfterStatement) testCommand allCommandOutputs fileName)
 
-testFile :: ParseAndTestInformationOutput -> ParseAndTestInformationOutput
-testFile (ParseAndTestInformationOutput (FileParsingInformation nextBeforeStatement nextStatement nextAfterStatement) testCommand allCommandOutputs fileName) = do
-    let output = allCommandOutputs +++ (executeAndReturnOutput testCommand nextStatement)
+testFile :: IO ParseAndTestInformationOutput -> IO ParseAndTestInformationOutput
+testFile testFileInput = do
+    (ParseAndTestInformationOutput (FileParsingInformation nextBeforeStatement nextStatement nextAfterStatement) testCommand allCommandOutputs fileName) <- testFileInput
+    outputs <- (executeAndReturnOutput testCommand nextStatement)
+    let output = allCommandOutputs ++ outputs
 
     case length nextAfterStatement of
-      0 -> (ParseAndTestInformationOutput (FileParsingInformation (nextBeforeStatement ++ nextStatement) "" nextAfterStatement) testCommand output fileName)
-      _ -> parseAndTestFile (ParseAndTestInformationOutput (FileParsingInformation (nextBeforeStatement ++ nextStatement) "" nextAfterStatement) testCommand output fileName)
+      0 -> return (ParseAndTestInformationOutput (FileParsingInformation (nextBeforeStatement ++ nextStatement) "" nextAfterStatement) testCommand output fileName)
+      _ -> parseAndTestFile (return (ParseAndTestInformationOutput (FileParsingInformation (nextBeforeStatement ++ nextStatement) "" nextAfterStatement) testCommand output fileName))
 
 returnIOBool :: IO Bool
 returnIOBool = return True
@@ -104,18 +109,19 @@ splitStringOnDelimeter (h:t) delimeter | h == delimeter = "" : split
     where split@(sh:st) = splitStringOnDelimeter t delimeter
 
 -- Parse file output to notify runner that it was successful
-parseToFileOutput :: IO String -> String -> IO String
-parseToFileOutput parseOutputIO filename = do
-   parseOutput <- parseOutputIO
+parseToFileOutput :: String -> String -> IO String
+parseToFileOutput parseOutput filename = do
+--    parseOutput <- parseOutputIO
+   let successMessage = "\n\nThe file " ++ filename ++ " successfully failed when lines where deleted! Well done!"
    if parseOutput == ""
-     then return ("\n\nThe file " ++ filename ++ " successfully failed when lines where deleted! Well done!")
+     then return (successMessage)
      else return ("\n\n" ++ parseOutput)
 
-writeToKingTutOutputFile :: IO String -> IO Bool
+writeToKingTutOutputFile :: String -> IO Bool
 writeToKingTutOutputFile outputText = do
     let kingTutOutputFile = ("king-tut-output.txt")
     kingTutOutputHandle <- openFile kingTutOutputFile AppendMode
-    outputText >>= hPutStr kingTutOutputHandle
+    hPutStr kingTutOutputHandle outputText
     hClose kingTutOutputHandle
     return True
 
