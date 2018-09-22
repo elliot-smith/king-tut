@@ -25,6 +25,8 @@ dependencies:
 - process >= 1.6.1.0 && < 1.7.0.0
 - hspec == 2.4.8
 - QuickCheck == 2.10.1
+- ConfigFile == 1.1.4
+- transformers == 0.5.2.0
 
 library:
   source-dirs: src

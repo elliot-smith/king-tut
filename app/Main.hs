@@ -1,15 +1,19 @@
 module Main where
 
 import FileParse
+import ConfigFile
 import System.IO
 import System.Directory
 import System.Exit
 
 main :: IO ()
 main = do
-    let fileNameToTest = "calculator/ts/src/add.ts"
+    config <- readConfig "./king-tut.conf"
+    putStrLn $ "The path value is: " ++ (srcFilePath config)
+    putStrLn $ "The filename value is: " ++ (testingFileName config)
+    let fileNameToTest = (srcFilePath config) ++ "/" ++ (testingFileName config)
     let backupFile = (fileNameToTest ++ ".tut.backup")
-    let command = "F:/Developer/tools/Node/npm.cmd run test"
+    let command = (inputTestCommand config)
 
     -- Tests the command above to ensure that it passes normally
     doAllTestsPass <- executeSuccessful command

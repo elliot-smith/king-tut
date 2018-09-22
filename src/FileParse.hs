@@ -37,8 +37,8 @@ parseAndOverwriteOriginalFile parsedInformation = do
 
    let parseAndOverwriteOriginalFileReturnObject = return (ParseAndTestInformationOutput (FileParsingInformation beforeNextStatement nextStatement afterNextStatement) testFileCommand allCommandOutputs testFileName)
    case isFileOverwritten of
-    True -> testFile parseAndOverwriteOriginalFileReturnObject
-    False -> parseAndOverwriteOriginalFileReturnObject
+      True -> testFile parseAndOverwriteOriginalFileReturnObject
+      False -> parseAndOverwriteOriginalFileReturnObject
 
 testFile :: IO ParseAndTestInformationOutput -> IO ParseAndTestInformationOutput
 testFile testFileInput = do
@@ -48,8 +48,8 @@ testFile testFileInput = do
 
     let testFileReturnObject = return (ParseAndTestInformationOutput (FileParsingInformation (beforeTestStatement ++ currentTestStatement) "" afterTestStatement) commandToTestFile output fileNameThatIsTested)
     case length afterTestStatement of
-      0 -> testFileReturnObject
-      _ -> parseAndOverwriteOriginalFile testFileReturnObject
+        0 -> testFileReturnObject
+        _ -> parseAndOverwriteOriginalFile testFileReturnObject
 
 getNextStatement :: String -> String -> String -> FileParsingInformation
 getNextStatement beforeNextStatement nextStatement "" = FileParsingInformation beforeNextStatement nextStatement ""
@@ -69,8 +69,8 @@ executeAndReturnOutput :: String -> String -> IO String
 executeAndReturnOutput cmd deletedStatement = do
     isExecuteSuccessful <- executeSuccessful cmd
     case isExecuteSuccessful of
-     True -> return ("Deleting the statement " ++ deletedStatement ++ " did not fail any tests. Please look into this!\n\n")
-     _           -> return ("")
+       True -> return ("Deleting the statement " ++ deletedStatement ++ " did not fail any tests. Please look into this!\n\n")
+       _    -> return ("")
 
 executeSuccessful :: String -> IO Bool
 executeSuccessful cmd = do
@@ -90,14 +90,14 @@ splitStringOnDelimeter (h:t) delimeter | h == delimeter = "" : split
 
 parseTestCommandOutputFile :: String -> String -> IO String
 parseTestCommandOutputFile parseOutput filename = do
-   let successMessage = "\n\nThe file " ++ filename ++ " successfully failed when lines where deleted! Well done!"
    if parseOutput == ""
-     then do
-          putStrLn "All tests failed. Congratulations!"
-          return (successMessage)
-     else do
-          putStrLn "At least one test passed. Please check the file king-tut-output.txt for more information"
-          return ("\n\n" ++ parseOutput)
+        then do
+            putStrLn "All tests failed. Congratulations!"
+            let successMessage = "\n\nThe file " ++ filename ++ " successfully failed when lines where deleted! Well done!"
+            return (successMessage)
+        else do
+            putStrLn "At least one test passed. Please check the file king-tut-output.txt for more information"
+            return ("\n\n" ++ parseOutput)
 
 writeToKingTutOutputFile :: String -> IO Bool
 writeToKingTutOutputFile commandOutputText = do
